@@ -1,73 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>zukezargispgt</title>
-    <style>
-        body { font-family: Arial; background: #111; color: white; text-align: center; }
-        #chatBox { width: 60%; margin: auto; margin-top: 20px; text-align: left; }
-        input { width: 60%; padding: 10px; }
-        button { padding: 10px; cursor: pointer; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zukezargispgt</title>
+<style>
+    body { font-family: Arial; background: #222; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h1 { margin-bottom: 20px; }
+    #chatBox { width: 90%; max-width: 600px; height: 400px; background: #333; padding: 15px; overflow-y: auto; border-radius: 8px; margin-bottom: 10px; }
+    input { width: 70%; padding: 10px; border-radius: 5px; border: none; margin-right: 5px; }
+    button { padding: 10px; border: none; border-radius: 5px; background: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background: #45a049; }
+    p { margin: 5px 0; }
+</style>
 </head>
 <body>
 
 <h1>zukezargispgt</h1>
-
 <div id="chatBox"></div>
-
-<input type="text" id="userInput" placeholder="Type here..." onkeydown="if(event.key==='Enter') sendMessage();">
-<button onclick="sendMessage()">Send</button>
+<div>
+    <input type="text" id="userInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+</div>
 
 <script>
 const botName = "zukezargispgt";
 
+// Load memory from localStorage
 let memory = JSON.parse(localStorage.getItem("zukezargispgt_memory")) || {};
 
+// Bad words filter
+const badWords = ["badword1","badword2","stupid","idiot"];
+
+// Spell correction dictionary
+const corrections = {
+    "helo": "hello",
+    "hw": "how",
+    "whta": "what",
+    "pii": "pi",
+    "mth": "math"
+};
+
+// Save memory
 function saveMemory() {
     localStorage.setItem("zukezargispgt_memory", JSON.stringify(memory));
 }
 
+// Correct spelling
+function correctSpelling(input) {
+    return input.split(" ").map(word => corrections[word] || word).join(" ");
+}
+
+// Detect math
 function tryMath(input) {
     if (/^[0-9+\-*/(). ]+$/.test(input)) {
-        try {
-            return eval(input);
-        } catch {
-            return "Math error.";
-        }
+        try { return eval(input); } 
+        catch { return "Math error."; }
     }
     return null;
 }
 
+// Check for bad words
+function containsBadWord(input) {
+    return badWords.some(word => input.includes(word));
+}
+
+// Generate bot response
 function respond(input) {
     input = input.toLowerCase().trim();
+    input = correctSpelling(input);
 
+    if (containsBadWord(input)) return "Please be respectful.";
+
+    // Learn format: learn: question=answer
     if (input.startsWith("learn:")) {
         let content = input.replace("learn:", "").trim();
         let parts = content.split("=");
         if (parts.length === 2) {
             memory[parts[0].trim()] = parts[1].trim();
             saveMemory();
-            return "Learned!";
+            return "Learned successfully!";
         }
-        return "Use: learn: question=answer";
+        return "Use format: learn: question=answer";
     }
 
+    // Check memory
     if (memory[input]) return memory[input];
 
-    let math = tryMath(input);
-    if (math !== null) return math;
+    // Math detection
+    let mathResult = tryMath(input);
+    if (mathResult !== null) return mathResult;
 
+    // Built-in responses
     if (input.includes("hello")) return "Hello!";
+    if (input.includes("how are you")) return "I'm functioning perfectly.";
     if (input.includes("name")) return "My name is " + botName;
-    if (input.includes("pi")) return Math.PI;
+    if (input.includes("pi")) return "π ≈ 3.1415926535";
 
-    return "I don't understand yet.";
+    return "I don't understand yet. You can teach me using: learn: question=answer";
 }
 
+// Send message to chat
 function sendMessage() {
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("chatBox");
-
     let userText = inputField.value;
     if (!userText) return;
 
@@ -75,6 +111,7 @@ function sendMessage() {
 
     chatBox.innerHTML += "<p><b>You:</b> " + userText + "</p>";
     chatBox.innerHTML += "<p><b>" + botName + ":</b> " + botReply + "</p>";
+    chatBox.scrollTop = chatBox.scrollHeight;
 
     inputField.value = "";
 }
