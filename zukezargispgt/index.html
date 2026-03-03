@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>zukezargispgt</title>
+    <style>
+        body { font-family: Arial; background: #111; color: white; text-align: center; }
+        #chatBox { width: 60%; margin: auto; margin-top: 20px; text-align: left; }
+        input { width: 60%; padding: 10px; }
+        button { padding: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h1>zukezargispgt</h1>
+
+<div id="chatBox"></div>
+
+<input type="text" id="userInput" placeholder="Type here..." onkeydown="if(event.key==='Enter') sendMessage();">
+<button onclick="sendMessage()">Send</button>
+
+<script>
+const botName = "zukezargispgt";
+
+let memory = JSON.parse(localStorage.getItem("zukezargispgt_memory")) || {};
+
+function saveMemory() {
+    localStorage.setItem("zukezargispgt_memory", JSON.stringify(memory));
+}
+
+function tryMath(input) {
+    if (/^[0-9+\-*/(). ]+$/.test(input)) {
+        try {
+            return eval(input);
+        } catch {
+            return "Math error.";
+        }
+    }
+    return null;
+}
+
+function respond(input) {
+    input = input.toLowerCase().trim();
+
+    if (input.startsWith("learn:")) {
+        let content = input.replace("learn:", "").trim();
+        let parts = content.split("=");
+        if (parts.length === 2) {
+            memory[parts[0].trim()] = parts[1].trim();
+            saveMemory();
+            return "Learned!";
+        }
+        return "Use: learn: question=answer";
+    }
+
+    if (memory[input]) return memory[input];
+
+    let math = tryMath(input);
+    if (math !== null) return math;
+
+    if (input.includes("hello")) return "Hello!";
+    if (input.includes("name")) return "My name is " + botName;
+    if (input.includes("pi")) return Math.PI;
+
+    return "I don't understand yet.";
+}
+
+function sendMessage() {
+    const inputField = document.getElementById("userInput");
+    const chatBox = document.getElementById("chatBox");
+
+    let userText = inputField.value;
+    if (!userText) return;
+
+    let botReply = respond(userText);
+
+    chatBox.innerHTML += "<p><b>You:</b> " + userText + "</p>";
+    chatBox.innerHTML += "<p><b>" + botName + ":</b> " + botReply + "</p>";
+
+    inputField.value = "";
+}
+</script>
+
+</body>
+</html>
